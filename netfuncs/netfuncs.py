@@ -1,5 +1,6 @@
 import sys
 import json
+from unicodedata import numeric
 
 def ipv4_to_value(ipv4_addr):
     """
@@ -17,7 +18,17 @@ def ipv4_to_value(ipv4_addr):
     """
 
     # TODO -- write me!
-    pass
+    addr_to_split = ipv4_addr.split('.')
+    addr_to_int = [int(x) for x in addr_to_split]
+    int_to_hex = [int(hex(x), base=16) for x in addr_to_int]
+    
+    numeric_addr = (int_to_hex[0] << 24)| \
+                   (int_to_hex[1] << 16)| \
+                   (int_to_hex[2] << 8) | \
+                   (int_to_hex[3] << 0)  
+
+    return numeric_addr
+    
 
 def value_to_ipv4(addr):
     """
@@ -36,7 +47,13 @@ def value_to_ipv4(addr):
     """
 
     # TODO -- write me!
-    pass
+    octal1 = (addr >> 24) & 0xff
+    octal2 = (addr >> 16) & 0xff
+    octal3 = (addr >> 8) & 0xff
+    octal4 = (addr >> 0) & 0xff
+
+    return f"{octal1}.{octal2}.{octal3}.{octal4}"
+    
 
 def get_subnet_mask_value(slash):
     """
@@ -56,7 +73,11 @@ def get_subnet_mask_value(slash):
     """
 
     # TODO -- write me!
-    pass
+    subnet_number = int(slash.split('/')[1])
+    mask_value = ((1 << subnet_number) - 1)
+    mask_value = mask_value << (32 - subnet_number)
+    return mask_value
+
 
 def ips_same_subnet(ip1, ip2, slash):
     """
@@ -84,7 +105,8 @@ def ips_same_subnet(ip1, ip2, slash):
     """
 
     # TODO -- write me!
-    pass
+    return ipv4_to_value(ip1) & get_subnet_mask_value(slash) ==\
+         ipv4_to_value(ip2) & get_subnet_mask_value(slash)
 
 def get_network(ip_value, netmask):
     """
@@ -98,7 +120,7 @@ def get_network(ip_value, netmask):
     """
 
     # TODO -- write me!
-    pass
+    return ip_value & netmask
 
 def find_router_for_ip(routers, ip):
     """
@@ -140,20 +162,71 @@ def find_router_for_ip(routers, ip):
     """
 
     # TODO -- write me!
-    pass
+    for address in routers:
+        mask = routers[address]["netmask"]
+        if ips_same_subnet(address, ip, mask):
+            return address
+    return None
+
 
 # Uncomment this code to have it run instead of the real main.
 # Be sure to comment it back out before you submit!
-"""
-def my_tests():
-    print("-------------------------------------")
-    print("This is the result of my custom tests")
-    print("-------------------------------------")
 
-    print(x)
+# def my_tests():
+#     print("-------------------------------------")
+#     print("This is the result of my custom tests")
+#     print("-------------------------------------")
 
-    # Add custom test code here
-"""
+#     # Tests for ipv4_to_value
+#     assert(ipv4_to_value("255.255.0.0") == 0xffff0000)
+#     print("ipv4_to_value({})  ".format("255.255.0.0"), "\033[92m" + "PASSED" + "\033[0m")
+#     assert(ipv4_to_value("1.2.3.4") == 0x01020304)
+#     print("ipv4_to_value({})  ".format("1.2.3.4"), "\033[92m" + "PASSED" + "\033[0m")
+
+#     # Tests for value_to_ipv4
+#     assert(value_to_ipv4(0xffff0000) == "255.255.0.0")
+#     print("value_to_ipv4({})  ".format(hex(0xffff0000)), "\033[92m" + "PASSED" + "\033[0m")
+#     assert(value_to_ipv4(0x01020304) == "1.2.3.4")
+#     print("value_to_ipv4({})  ".format(hex(0x01020304)), "\033[92m" + "PASSED" + "\033[0m")
+
+#     # Tests for get_subnet_mask_value
+#     assert(get_subnet_mask_value("/16") == 0xffff0000)
+#     print("get_subnet_mask_value({})  ".format("/16"), "\033[92m" + "PASSED" + "\033[0m")
+#     assert(get_subnet_mask_value("10.20.30.40/23") == 0xfffffe00)
+#     print("get_subnet_mask_value({})  ".format("10.20.30.40/23"), "\033[92m" + "PASSED" + "\033[0m")
+
+#     # Tests for ips_same_subnet
+#     assert(ips_same_subnet("10.23.121.17", "10.23.121.225", "/23"))
+#     print("ips_same_subnet({}, {}, {})  ".format("10.23.121.17", "10.23.121.225", "/23"), "\033[92m" + "PASSED" + "\033[0m")
+#     assert(not ips_same_subnet("10.23.230.22", "10.24.121.225", "/16"))
+#     print("ips_same_subnet({}, {}, {})  ".format("10.23.230.22", "10.24.121.225", "/16"), "\033[92m" + "PASSED" + "\033[0m")
+
+#     # Tests for get_network
+#     assert(get_network(0x01020304, 0xffffff00) == 0x01020300)
+#     print("get_network({}, {})  ".format(hex(0x01020304), hex(0xffffff00)), "\033[92m" + "PASSED" + "\033[0m")
+
+#     # Tests for find_router_for_ip
+#     routers = {
+#         "1.2.3.1": {
+#             "netmask": "/24"
+#         },
+#         "1.2.4.1": {
+#             "netmask": "/24"
+#         }
+#     }
+#     assert(find_router_for_ip(routers, "1.2.3.5") == "1.2.3.1")
+#     print("find_router_for_ip({}, {})  ".format(routers, "1.2.3.5"), "\033[92m" + "PASSED" + "\033[0m")
+
+#     routers = {
+#         "1.2.3.1": {
+#             "netmask": "/24"
+#         },
+#         "1.2.4.1": {
+#             "netmask": "/24"
+#         }
+#     }
+#     assert(find_router_for_ip(routers, "1.2.5.6") is None)
+#     print("find_router_for_ip({}, {})  ".format(routers, "1.2.5.6"), "\033[92m" + "PASSED" + "\033[0m")
 
 ## -------------------------------------------
 ## Do not modify below this line
@@ -211,7 +284,7 @@ def print_ip_routers(routers, src_dest_pairs):
     router_host_map = {}
 
     for ip in all_ips:
-        router = find_router_for_ip(routers, ip)
+        router = str(find_router_for_ip(routers, ip))
         
         if router not in router_host_map:
             router_host_map[router] = []
@@ -246,3 +319,6 @@ def main(argv):
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
     
+
+# 192.0.2.37
+# 0xc0.0.0x02.0x25
